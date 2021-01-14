@@ -1,9 +1,18 @@
 package com.tw.zd.task;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.sun.istack.internal.NotNull;
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Scheduler;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -92,4 +101,36 @@ public class SchedulersTest {
         Thread.sleep(1000);
         assertEquals("main_one__five_main_two__four_main_three_", result);
     }
+
+    @Test
+    void should_execute_tasks_using_scheduler_by_from_factory() throws InterruptedException {
+        ExecutorService poolA = Executors.newFixedThreadPool(5, threadFactory("Schedule-A-%d"));
+        Scheduler schedulerA = Schedulers.from(poolA);
+
+        ExecutorService poolB = Executors.newFixedThreadPool(5, threadFactory("Schedule-B-%d"));
+        Scheduler schedulerB = Schedulers.from(poolB);
+
+        Observable<String> observable = Observable.create(emitter -> {
+            emitter.onNext("Hello");
+            emitter.onNext("World");
+            emitter.onComplete();
+        });
+
+        observable
+                .subscribeOn(schedulerA)
+                .subscribeOn(schedulerB)
+                .subscribe(i -> result += Thread.currentThread().getName() + "_" + i + "_",
+                        Throwable::printStackTrace,
+                        () -> result += "_completed");
+
+        Thread.sleep(1000);
+        assertEquals("Schedule-A-0_Hello_Schedule-A-0_World__completed", result);
+    }
+
+    private ThreadFactory threadFactory(String pattern) {
+        return new ThreadFactoryBuilder()
+                .setNameFormat(pattern)
+                .build();
+    }
+
 }
