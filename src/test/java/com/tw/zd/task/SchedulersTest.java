@@ -11,6 +11,7 @@ public class SchedulersTest {
     private String result = "";
     private String result1 = "";
     private String result2 = "";
+
     @Test
     void should_schedule_a_job_when_created_schedule_worker() throws InterruptedException {
         Scheduler scheduler = Schedulers.single();
@@ -26,10 +27,10 @@ public class SchedulersTest {
         Scheduler scheduler = Schedulers.newThread();
         Scheduler.Worker worker = scheduler.createWorker();
         worker.schedule(() -> {
-           result += "_first_action";
-           worker.dispose();
+            result += "_first_action";
+            worker.dispose();
         });
-        worker.schedule(() -> result+="_second_action");
+        worker.schedule(() -> result += "_second_action");
 
         Thread.sleep(1000);
         assertEquals("_first_action", result);
@@ -59,5 +60,36 @@ public class SchedulersTest {
         });
         Thread.sleep(3000);
         assertEquals("RxNewThreadScheduler-1_Start_End_worker_", result);
+    }
+
+    @Test
+    void should_execute_tasks_using_trampoline_scheduler() throws InterruptedException {
+        Observable.just(2, 4, 6, 8)
+                .subscribeOn(Schedulers.trampoline())
+                .subscribe(i -> result += "" + i);
+        Observable.just(1, 3, 5, 7)
+                .subscribeOn(Schedulers.trampoline())
+                .subscribe(i -> result += "" + i);
+
+        Thread.sleep(1000);
+        assertEquals("24681357", result);
+    }
+
+    @Test
+    void should_execute_tasks_using_trampoline_scheduler_order() throws InterruptedException {
+        Scheduler scheduler = Schedulers.trampoline();
+        Scheduler.Worker worker = scheduler.createWorker();
+        worker.schedule(() -> {
+            result += Thread.currentThread().getName() + "_one_";
+            worker.schedule(() -> {
+                result += Thread.currentThread().getName() + "_two_";
+                worker.schedule(() -> result += Thread.currentThread().getName() + "_three_");
+                result += "_four_";
+            });
+            result += "_five_";
+        });
+
+        Thread.sleep(1000);
+        assertEquals("main_one__five_main_two__four_main_three_", result);
     }
 }
