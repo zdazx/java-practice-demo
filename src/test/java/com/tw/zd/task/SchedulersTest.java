@@ -1,12 +1,8 @@
 package com.tw.zd.task;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.sun.istack.internal.NotNull;
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Scheduler;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.jupiter.api.Test;
 
