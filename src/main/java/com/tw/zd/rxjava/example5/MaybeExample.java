@@ -19,7 +19,7 @@ public class MaybeExample {
                     }
 
                     public void onSuccess(@NonNull Object o) {
-                        System.out.println("***" + o);
+
                     }
 
                     public void onError(@NonNull Throwable throwable) {
