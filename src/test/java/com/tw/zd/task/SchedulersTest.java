@@ -3,6 +3,7 @@ package com.tw.zd.task;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.jupiter.api.Test;
 
@@ -43,13 +44,15 @@ public class SchedulersTest {
 
     @Test
     void should_execute_a_task_with_a_new_thread() throws InterruptedException {
-        Observable.just("Hello")
+        Disposable disposable = Observable.just("Hello")
                 .observeOn(Schedulers.newThread())
                 .doOnNext(item -> result1 += Thread.currentThread().getName())
                 .observeOn(Schedulers.newThread())
                 .subscribe(item -> result2 += Thread.currentThread().getName());
 
         Thread.sleep(1000);
+        disposable.dispose();
+
         assertEquals("RxNewThreadScheduler-1", result1);
         assertEquals("RxNewThreadScheduler-2", result2);
     }
@@ -63,20 +66,24 @@ public class SchedulersTest {
             worker.schedule(() -> result += "_worker_");
             result += "_End";
         });
+
         Thread.sleep(3000);
         assertEquals("RxNewThreadScheduler-1_Start_End_worker_", result);
     }
 
     @Test
     void should_execute_tasks_using_trampoline_scheduler() throws InterruptedException {
-        Observable.just(2, 4, 6, 8)
+        Disposable disposable1 = Observable.just(2, 4, 6, 8)
                 .subscribeOn(Schedulers.trampoline())
                 .subscribe(i -> result += "" + i);
-        Observable.just(1, 3, 5, 7)
+        Disposable disposable2 = Observable.just(1, 3, 5, 7)
                 .subscribeOn(Schedulers.trampoline())
                 .subscribe(i -> result += "" + i);
 
         Thread.sleep(1000);
+        disposable1.dispose();
+        disposable2.dispose();
+
         assertEquals("24681357", result);
     }
 
@@ -112,7 +119,7 @@ public class SchedulersTest {
             emitter.onComplete();
         });
 
-        observable
+        Disposable disposable = observable
                 .subscribeOn(schedulerA)
                 .subscribeOn(schedulerB)
                 .subscribe(i -> result += Thread.currentThread().getName() + "_" + i + "_",
@@ -120,6 +127,8 @@ public class SchedulersTest {
                         () -> result += "_completed");
 
         Thread.sleep(1000);
+        disposable.dispose();
+
         assertEquals("Schedule-A-0_Hello_Schedule-A-0_World__completed", result);
     }
 
