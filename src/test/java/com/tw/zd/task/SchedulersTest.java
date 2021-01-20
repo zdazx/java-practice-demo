@@ -72,6 +72,20 @@ public class SchedulersTest {
     }
 
     @Test
+    void should_execute_tasks_on_client_thread_when_using_trampoline() throws InterruptedException {
+        Disposable disposable = Observable.just(1)
+                .observeOn(Schedulers.trampoline())
+                .subscribe(i -> result1 = Thread.currentThread().getName(),
+                        System.out::println,
+                        () -> System.out.println("complete"));
+
+        Thread.sleep(1000);
+        disposable.dispose();
+
+        assertEquals("main", result1);
+    }
+
+    @Test
     void should_execute_tasks_using_trampoline_scheduler() throws InterruptedException {
         Disposable disposable1 = Observable.just(2, 4, 6, 8)
                 .subscribeOn(Schedulers.trampoline())
@@ -139,7 +153,7 @@ public class SchedulersTest {
     }
 
     @Test
-    void should_execute_on_different_thread_when_use_observer_on_many_times() throws InterruptedException {
+    void should_execute_tasks_on_different_thread_when_use_observer_on_many_times() throws InterruptedException {
         Disposable disposable = Observable.just(1)
                 .observeOn(Schedulers.newThread())
                 .doOnNext(i -> result1 = Thread.currentThread().getName())
