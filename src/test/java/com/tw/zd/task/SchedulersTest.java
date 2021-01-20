@@ -138,4 +138,19 @@ public class SchedulersTest {
                 .build();
     }
 
+    @Test
+    void should_execute_on_different_thread_when_use_observer_on_many_times() throws InterruptedException {
+        Disposable disposable = Observable.just(1)
+                .observeOn(Schedulers.newThread())
+                .doOnNext(i -> result1 = Thread.currentThread().getName())
+                .observeOn(Schedulers.newThread())
+                .subscribe(i -> result2 = Thread.currentThread().getName());
+
+        Thread.sleep(1000);
+        disposable.dispose();
+
+        assertEquals("RxNewThreadScheduler-1", result1);
+        assertEquals("RxNewThreadScheduler-2", result2);
+
+    }
 }
