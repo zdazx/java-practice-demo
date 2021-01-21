@@ -1,12 +1,22 @@
 package com.tw.zd.rxjava.example7;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.FlowableSubscriber;
 import org.reactivestreams.Subscription;
 
 public class FlowableExample {
     public static void main(String[] args) {
-        Flowable.just(1, 2, 3)
+        Flowable.create(new FlowableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(FlowableEmitter<Integer> flowableEmitter) throws Exception {
+                flowableEmitter.onNext(1);
+                flowableEmitter.onNext(2);
+                flowableEmitter.onNext(3);
+            }
+        }, BackpressureStrategy.BUFFER)
                 .subscribe(new FlowableSubscriber<Integer>() {
                     private Subscription subscription;
 
@@ -30,7 +40,6 @@ public class FlowableExample {
 
                     @Override
                     public void onComplete() {
-                        System.out.println("flowable-complete");
                     }
                 });
     }
